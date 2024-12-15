@@ -40,6 +40,8 @@ export async function updateNews(
   newsId: string | undefined,
   newNews: NewsBody
 ) {
+  await dbConnect();
+
   const newsData = await news.findById(newsId).exec();
 
   newsData.title = newNews.title;
@@ -62,6 +64,8 @@ export async function updateNews(
 }
 
 export async function deleteNews(newsId: string) {
+  await dbConnect();
+
   try {
     await Promise.all([
       news.findByIdAndDelete(newsId),
@@ -76,6 +80,8 @@ export async function deleteNews(newsId: string) {
 }
 
 export async function getUser(userId: string): Promise<Users | undefined> {
+  await dbConnect();
+
   try {
     const userData = await user.findOne({ _id: userId }).exec();
     return userData;

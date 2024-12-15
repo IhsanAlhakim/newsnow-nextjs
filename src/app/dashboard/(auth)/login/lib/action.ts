@@ -3,11 +3,14 @@
 import user from "@/models/user";
 import * as bcrypt from "bcrypt";
 import { createSession } from "./session";
+import dbConnect from "@/lib/dbConnect";
 
 export async function login(
   email: string,
   password: string
 ): Promise<{ success?: boolean; serverError?: boolean }> {
+  await dbConnect();
+
   try {
     const userData = await user
       .findOne({ email: email })
