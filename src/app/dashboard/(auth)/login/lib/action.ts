@@ -2,6 +2,7 @@
 
 import user from "@/models/user";
 import * as bcrypt from "bcrypt";
+import { createSession } from "./session";
 
 export async function login(
   email: string,
@@ -25,7 +26,7 @@ export async function login(
         success: false,
       };
     }
-    // await createSession(userData._id);
+    await createSession(userData._id);
     return { success: true };
   } catch (error) {
     console.error(error);
