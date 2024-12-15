@@ -2,65 +2,59 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import ErrorMessage from "@/components/ui/ErrorMessage";
 import { Separator } from "@/components/ui/separator";
 import { KeyRound, Mail } from "lucide-react";
 import { redirect } from "next/navigation";
+import { useActionState } from "react";
+import { login } from "../lib/action";
+import { loginFormSchema } from "../lib/validation";
+import ErrorMessage from "@/components/ui/ErrorMessage";
 
 export default function LoginForm() {
   const initialState = {
     errorTitle: "",
     errorDesc: [],
   };
+  async function loginFormAction(prevState: any, formData: FormData) {
+    const validate = loginFormSchema.safeParse({
+      email: formData.get("email"),
+      password: formData.get("password"),
+    });
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+    if (!validate.success) {
+      const errorDesc = validate.error.issues.map((issue) => issue.message);
+      return { errorTitle: "Validation Error", errorDesc: errorDesc };
+    }
+    const email = validate.data.email;
+    const password = validate.data.password;
+
+    const loginAction = await login(email, password);
+
+    if (loginAction.serverError) {
+      return {
+        errorTitle: "Server Error",
+        errorDesc: ["Internal Server Error, Please Try Again Later"],
+      };
+    }
+
+    if (!loginAction.success) {
+      return {
+        errorTitle: "User not found",
+        errorDesc: ["Email or Password incorrect"],
+      };
+    }
+
     redirect("/dashboard");
   }
-
-  // async function loginFormAction(prevState: any, formData: FormData) {
-  // const validate = loginFormSchema.safeParse({
-  //   email: formData.get("email"),
-  //   password: formData.get("password"),
-  // });
-
-  // if (!validate.success) {
-  //   const errorDesc = validate.error.issues.map((issue) => issue.message);
-  //   return { errorTitle: "Validation Error", errorDesc: errorDesc };
-  // }
-  // const email = validate.data.email;
-  // const password = validate.data.password;
-
-  // const loginAction = await login(email, password);
-
-  // if (loginAction.serverError) {
-  //   return {
-  //     errorTitle: "Server Error",
-  //     errorDesc: ["Internal Server Error, Please Try Again Later"],
-  //   };
-  // }
-
-  // if (!loginAction.success) {
-  //   return {
-  //     errorTitle: "User not found",
-  //     errorDesc: ["Email or Password incorrect"],
-  //   };
-  // }
-
-  // redirect("/dashboard");
-  // }
-  // const [state, formAction, isPending] = useActionState(
-  //   loginFormAction,
-  //   initialState
-  // );
+  const [state, formAction, isPending] = useActionState(
+    loginFormAction,
+    initialState
+  );
   return (
     <>
-      <ErrorMessage
-        errorTitle={initialState.errorTitle}
-        errorDesc={initialState.errorDesc}
-      />
+      <ErrorMessage errorTitle={state.errorTitle} errorDesc={state.errorDesc} />
       <div className="mt-3">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form action={formAction} className="flex flex-col gap-4">
           <div>
             <label htmlFor="name" className="font-semibold">
               Email
@@ -94,12 +88,11 @@ export default function LoginForm() {
             </div>
           </div>
           <Button
-            // disabled={isPending}
+            disabled={isPending}
             className="mt-5 text-md bg-blue-500 hover:bg-blue-700"
             type="submit"
           >
-            {/* Login{isPending && "..."} */}
-            Loading
+            Login{isPending && "..."}
           </Button>
         </form>
       </div>
